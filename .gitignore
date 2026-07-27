@@ -24,3 +24,6 @@ runs/
 # OS
 Thumbs.db
 .DS_Store
+
+# Fetched on demand (third-party dataset, referenced not vendored)
+corpus/benign/notinject.yaml
