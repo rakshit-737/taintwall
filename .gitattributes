@@ -1,0 +1,7 @@
+* text=auto eol=lf
+
+# Corpus files are hashed byte-for-byte. CRLF translation silently breaks
+# every payload_sha256, so pin them explicitly.
+corpus/** text eol=lf
+*.yaml text eol=lf
+*.jsonl text eol=lf

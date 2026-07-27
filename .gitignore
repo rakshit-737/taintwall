@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+dist/
+build/
+
+# Tooling leftovers
+.opencode/
+node_modules/
+
+# Local runs
+.env
+runs/
+*.local.json
+
+# OS
+Thumbs.db
+.DS_Store
