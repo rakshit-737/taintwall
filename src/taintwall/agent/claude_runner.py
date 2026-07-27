@@ -21,6 +21,7 @@ from taintwall.agent.fake_llm import Transcript
 from taintwall.agent.loop import RunResult
 from taintwall.agent.sinks import ExfilRecorder
 from taintwall.agent.tools import ToolCall, ToolRegistry
+from taintwall.layers.base import LayerStack
 
 _SERVER_NAME = "taintwall_demo"
 
@@ -71,9 +72,15 @@ def run_with_claude(
     intent: str,
     registry: ToolRegistry,
     recorder: ExfilRecorder,
+    stack: LayerStack | None = None,
     max_turns: int = 8,
 ) -> RunResult:
-    """Run one real-model episode of the undefended demo agent."""
+    """Run one real-model episode of the demo agent.
+
+    With `stack=None` the agent is undefended (the Phase 1 baseline). Pass a layer
+    stack to defend it: Layer 1 rewrites tool output via PostToolUse, and the policy
+    and provenance layers deny tool calls via PreToolUse.
+    """
     if os.environ.get("TAINTWALL_DEMO_ACK") != "1":
         raise RuntimeError("set TAINTWALL_DEMO_ACK=1 to run the deliberately vulnerable agent")
     if not sdk_available():
@@ -88,6 +95,8 @@ def run_with_claude(
         create_sdk_mcp_server,
     )
 
+    from taintwall.layers.sdk_hooks import build_hooks
+
     server = create_sdk_mcp_server(
         name=_SERVER_NAME, version="0.1.0", tools=build_sdk_tools(registry)
     )
@@ -95,6 +104,7 @@ def run_with_claude(
         mcp_servers={_SERVER_NAME: server},
         allowed_tools=[f"mcp__{_SERVER_NAME}__{name}" for name in registry.names()],
         max_turns=max_turns,
+        hooks=build_hooks(stack, intent=intent) if stack is not None else None,
     )
 
     calls: list[ToolCall] = []
