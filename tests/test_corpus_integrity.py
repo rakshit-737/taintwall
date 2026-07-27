@@ -77,8 +77,8 @@ def test_ids_are_unique_case_insensitively() -> None:
 def test_every_family_has_an_adaptive_variant() -> None:
     families = {r.family for r in ATTACKS}
     adaptive = {r.family for r in ATTACKS if r.adaptive}
-    missing = families - adaptive
-    assert missing == set(), f"families with no adaptive variant: {sorted(f.value for f in missing)}"
+    missing = sorted(f.value for f in families - adaptive)
+    assert missing == [], f"families with no adaptive variant: {missing}"
 
 
 def test_no_unresolved_hash_placeholder_remains() -> None:
