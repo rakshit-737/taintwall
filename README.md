@@ -114,8 +114,9 @@ The multi-channel vulnerable agent and the defense-ablation baseline are not.
 ```bash
 uv sync --dev
 uv run taintwall corpus validate     # census of the labelled corpus
-uv run taintwall detect              # Layer 1 detection efficacy over the corpus
+uv run taintwall detect              # Layer 1 and Layer 2 detection efficacy
 uv run taintwall bench               # ablation table, deterministic track
+uv run taintwall dashboard           # self-contained HTML dashboard (dashboard.html)
 uv run pytest -q                     # full gate
 ```
 

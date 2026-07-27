@@ -11,6 +11,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from taintwall.corpus.loader import load_attacks, load_benign
+from taintwall.dashboard import gather_data, render_dashboard
 from taintwall.harness.detect_eval import render_all_detection_markdown
 from taintwall.harness.report import build_reports, render_markdown
 from taintwall.harness.runner import ModelKind, run_matrix
@@ -20,6 +21,13 @@ from taintwall.tasks.definitions import TASKS
 
 def _cmd_detect() -> int:
     sys.stdout.write(render_all_detection_markdown())
+    return 0
+
+
+def _cmd_dashboard(out: Path) -> int:
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(render_dashboard(gather_data()), encoding="utf-8", newline="\n")
+    print(f"wrote {out}")
     return 0
 
 
@@ -88,7 +96,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     bench.add_argument("--out", type=Path, default=None)
     bench.add_argument("--update-baseline", action="store_true")
 
-    sub.add_parser("detect", help="Layer 1 detection efficacy over the corpus")
+    sub.add_parser("detect", help="Layer 1 and Layer 2 detection efficacy over the corpus")
+
+    dashboard = sub.add_parser("dashboard", help="write a self-contained HTML dashboard")
+    dashboard.add_argument("--out", type=Path, default=Path("dashboard.html"))
 
     corpus = sub.add_parser("corpus", help="corpus utilities")
     corpus_sub = corpus.add_subparsers(dest="corpus_command", required=True)
@@ -101,6 +112,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_bench(args.update_baseline, args.model, args.limit_attacks, args.out)
     if args.command == "detect":
         return _cmd_detect()
+    if args.command == "dashboard":
+        return _cmd_dashboard(args.out)
     if args.corpus_command == "validate":
         return _cmd_corpus_validate()
     return _cmd_corpus_export(args.out)

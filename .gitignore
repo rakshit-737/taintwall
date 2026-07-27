@@ -27,3 +27,7 @@ Thumbs.db
 
 # Fetched on demand (third-party dataset, referenced not vendored)
 corpus/benign/notinject.yaml
+
+# Generated dashboard artifacts (reproduce with `taintwall dashboard`)
+dashboard.html
+dashboard*.png
