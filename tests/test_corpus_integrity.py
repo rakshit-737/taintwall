@@ -28,7 +28,15 @@ _ALLOWED_SUFFIXES = (
 _ALLOWED_NETWORKS = tuple(
     ipaddress.ip_network(n) for n in ("192.0.2.0/24", "198.51.100.0/24", "203.0.113.0/24")
 )
-_HOST_RE = re.compile(r"(?:https?://|@)([A-Za-z0-9._-]+)")
+# A URL host follows "http(s)://"; an email host follows "@" and always contains a
+# dot. Requiring the dot on the email branch keeps JSON-LD keys like "@context" and
+# "@type" from being mistaken for live hosts.
+_URL_HOST_RE = re.compile(r"https?://([A-Za-z0-9._-]+)")
+_EMAIL_HOST_RE = re.compile(r"@([A-Za-z0-9._-]+\.[A-Za-z0-9]{2,})")
+
+
+def _hosts_in(payload: str) -> list[str]:
+    return _URL_HOST_RE.findall(payload) + _EMAIL_HOST_RE.findall(payload)
 
 
 def _host_is_inert(host: str) -> bool:
@@ -55,7 +63,7 @@ def test_payload_hash_matches(record: AttackRecord) -> None:
 
 @pytest.mark.parametrize("record", ATTACKS, ids=lambda r: r.id)
 def test_targets_are_inert(record: AttackRecord) -> None:
-    bad = [h for h in _HOST_RE.findall(record.payload) if not _host_is_inert(h)]
+    bad = [h for h in _hosts_in(record.payload) if not _host_is_inert(h)]
     assert not bad, f"{record.id} references live host(s): {bad}"
 
 

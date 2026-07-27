@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import re
 import sys
 from pathlib import Path
 
@@ -21,7 +22,9 @@ import yaml
 
 from taintwall.corpus.loader import ATTACKS_DIR, BENIGN_DIR, compute_sha256
 
-PLACEHOLDER = 'payload_sha256: "AUTO"'
+# Match payload_sha256: "AUTO" and the unquoted payload_sha256: AUTO that a YAML
+# dumper emits, so authoring by hand and generating with PyYAML both work.
+_PLACEHOLDER_RE = re.compile(r'payload_sha256:\s*"?AUTO"?')
 
 
 def _decoded_payloads(text: str) -> list[str]:
@@ -38,22 +41,23 @@ def _decoded_payloads(text: str) -> list[str]:
 
 def rehash_file(path: Path) -> int:
     text = path.read_text(encoding="utf-8")
-    if PLACEHOLDER not in text:
+    matches = list(_PLACEHOLDER_RE.finditer(text))
+    if not matches:
         return 0
 
     payloads = _decoded_payloads(text)
-    parts = text.split(PLACEHOLDER)
-    if len(parts) - 1 != len(payloads):
+    if len(matches) != len(payloads):
         raise SystemExit(
-            f"{path}: {len(parts) - 1} AUTO placeholders but {len(payloads)} records. "
+            f"{path}: {len(matches)} AUTO placeholders but {len(payloads)} records. "
             "Every record must use AUTO, or none."
         )
 
-    rebuilt = parts[0]
-    for index, payload in enumerate(payloads):
-        rebuilt += f'payload_sha256: "{compute_sha256(payload)}"' + parts[index + 1]
+    payload_iter = iter(payloads)
 
-    path.write_text(rebuilt, encoding="utf-8", newline="\n")
+    def _replace(_: re.Match[str]) -> str:
+        return f'payload_sha256: "{compute_sha256(next(payload_iter))}"'
+
+    path.write_text(_PLACEHOLDER_RE.sub(_replace, text), encoding="utf-8", newline="\n")
     return len(payloads)
 
 
@@ -64,7 +68,7 @@ def main(argv: list[str] | None = None) -> int:
 
     files = sorted(ATTACKS_DIR.glob("*.yaml")) + sorted(BENIGN_DIR.glob("*.yaml"))
     if args.check:
-        stale = [p for p in files if PLACEHOLDER in p.read_text(encoding="utf-8")]
+        stale = [p for p in files if _PLACEHOLDER_RE.search(p.read_text(encoding="utf-8"))]
         for path in stale:
             print(f"unresolved AUTO placeholder: {path}", file=sys.stderr)
         return 1 if stale else 0
