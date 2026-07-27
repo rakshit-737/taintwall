@@ -42,3 +42,9 @@ select = ["E", "F", "I", "UP", "B", "PTH", "unspecified-encoding", "RUF"]
 [tool.mypy]
 strict = true
 files = ["src", "tests"]
+
+# claude-agent-sdk is an optional extra with no type stubs; it is imported only
+# inside functions guarded by sdk_available().
+[[tool.mypy.overrides]]
+module = "claude_agent_sdk.*"
+ignore_missing_imports = true
