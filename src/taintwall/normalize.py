@@ -16,6 +16,8 @@ import unicodedata
 from dataclasses import dataclass
 from enum import StrEnum
 
+from taintwall.markup import has_hidden_markup
+
 # Invisible carriers with no legitimate role in retrieved prose. Removed outright.
 _ZERO_WIDTH = frozenset("​‌‍⁠⁢⁣⁤﻿­᠎")
 _BIDI_CONTROLS = frozenset("‪‫‬‭‮⁦⁧⁨⁩")
@@ -29,6 +31,7 @@ class Finding(StrEnum):
     INVISIBLE_CODEPOINTS = "invisible_codepoints"
     BIDI_CONTROL = "bidi_control"
     MIXED_SCRIPT = "mixed_script"
+    HIDDEN_MARKUP = "hidden_markup"
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,8 +102,15 @@ def detect(text: str) -> frozenset[Finding]:
         findings.add(Finding.INVISIBLE_CODEPOINTS)
     if _has_mixed_script_word(text):
         findings.add(Finding.MIXED_SCRIPT)
+    if has_hidden_markup(text):
+        findings.add(Finding.HIDDEN_MARKUP)
     return frozenset(findings)
 
 
 def normalize(text: str) -> Normalization:
+    """Neutralize codepoint smuggling and report every finding.
+
+    Neutralization strips only the invisible carriers; hidden *markup* is detected
+    but not rewritten, because removing it safely would require rendering the page.
+    """
     return Normalization(text=strip_controls(text), findings=detect(text))

@@ -19,6 +19,7 @@ from taintwall.normalize import detect
 @dataclass(frozen=True, slots=True)
 class DetectionReport:
     codepoint_family_tpr: Proportion
+    markup_family_tpr: Proportion
     all_attacks_flagged: Proportion
     benign_false_positive: Proportion
 
@@ -28,19 +29,23 @@ def evaluate_layer1() -> DetectionReport:
     benign = load_benign()
 
     f3a = [r for r in attacks if r.family is Family.F3A]
+    f3b = [r for r in attacks if r.family is Family.F3B]
     f3a_hits = sum(1 for r in f3a if detect(r.payload))
+    f3b_hits = sum(1 for r in f3b if detect(r.payload))
     all_hits = sum(1 for r in attacks if detect(r.payload))
     benign_hits = sum(1 for r in benign if detect(r.text))
 
     return DetectionReport(
         codepoint_family_tpr=Proportion(f3a_hits, len(f3a)),
+        markup_family_tpr=Proportion(f3b_hits, len(f3b)),
         all_attacks_flagged=Proportion(all_hits, len(attacks)),
         benign_false_positive=Proportion(benign_hits, len(benign)),
     )
 
 
 def render_detection_markdown(report: DetectionReport) -> str:
-    tpr = report.codepoint_family_tpr.format()
+    codepoint = report.codepoint_family_tpr.format()
+    markup = report.markup_family_tpr.format()
     total = report.all_attacks_flagged.format()
     fpr = report.benign_false_positive.format()
     return "\n".join(
@@ -49,12 +54,14 @@ def render_detection_markdown(report: DetectionReport) -> str:
             "",
             "| metric | value |",
             "|---|---|",
-            f"| invisible-codepoint attacks (F3a) flagged | {tpr} |",
+            f"| invisible-codepoint attacks (F3a) flagged | {codepoint} |",
+            f"| hidden-markup attacks (F3b) flagged | {markup} |",
             f"| all attacks flagged | {total} |",
             f"| benign corpus flagged (false positive) | {fpr} |",
             "",
-            "> Layer 1 flags codepoint-level smuggling only. It is expected to flag the",
-            "> F3a family and little else; F3b (hidden markup) needs a markup parser and",
-            "> is a later increment. Measured against the corpus, not the scripted ASR.",
+            "> Layer 1 flags the two concealment families (F3a codepoints, F3b markup)",
+            "> and nothing else - the remaining families use plain text, which is a",
+            "> detector's job (Layer 2), not a normalizer's. Measured against the corpus,",
+            "> not the scripted attack-success rate.",
         ]
     )

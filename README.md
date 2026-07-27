@@ -12,10 +12,11 @@ agent cannot enforce itself.
 **Status: Phase 2, Layer 1 shipped.** Phase 1 built the *attack* side and the
 *measurement* side — a deliberately vulnerable demo agent, a benign task suite, a
 labelled attack corpus, and a reporter whose ablation table has all five columns wired.
-**Layer 1 is now real**: it normalizes tool output and detects codepoint-level smuggling,
-catching 100% of the invisible-codepoint attack family at a 0% false-positive rate on the
-benign corpus (`taintwall detect`). Layers 2–4 remain stubs. The README tracks exactly
-what defends and what does not.
+**Layer 1 is now real**: it normalizes tool output and detects both concealment families
+— invisible codepoints (F3a) and hidden markup (F3b) — catching **100% of each** at a
+**0% false-positive rate** on the benign corpus, and flagging nothing in the eight
+plain-text families (that is a detector's job, Layer 2). Run `taintwall detect`. Layers
+2–4 remain stubs. The README tracks exactly what defends and what does not.
 
 ---
 

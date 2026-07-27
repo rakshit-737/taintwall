@@ -10,4 +10,5 @@ def test_detect_command_reports_layer1_efficacy(capsys: pytest.CaptureFixture[st
     out = capsys.readouterr().out
     assert "Layer 1 detection" in out
     assert "invisible-codepoint attacks (F3a) flagged" in out
+    assert "hidden-markup attacks (F3b) flagged" in out
     assert "false positive" in out

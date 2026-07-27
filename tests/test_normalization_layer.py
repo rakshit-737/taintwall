@@ -71,15 +71,22 @@ def test_layer1_catches_every_invisible_codepoint_attack() -> None:
     assert tpr.trials == 12
 
 
+def test_layer1_catches_every_hidden_markup_attack() -> None:
+    tpr = evaluate_layer1().markup_family_tpr
+    assert tpr.successes == tpr.trials
+    assert tpr.trials == 12
+
+
 def test_layer1_has_no_false_positives_on_the_benign_corpus() -> None:
     report = evaluate_layer1()
     assert report.benign_false_positive.successes == 0
 
 
-def test_layer1_does_not_overflag_other_families() -> None:
-    # Codepoint detection should flag F3a and essentially nothing else; the other
-    # families use plain text or markup, which is a later increment's job.
-    non_f3a = [r for r in load_attacks() if r.family is not Family.F3A]
+def test_layer1_flags_only_the_concealment_families() -> None:
+    # Layer 1 detects the two concealment families (F3a codepoints, F3b markup)
+    # and nothing else. The other families use plain text, which is Layer 2's job.
     from taintwall.normalize import detect
 
-    assert not any(detect(r.payload) for r in non_f3a)
+    concealment = {Family.F3A, Family.F3B}
+    other = [r for r in load_attacks() if r.family not in concealment]
+    assert not any(detect(r.payload) for r in other)
