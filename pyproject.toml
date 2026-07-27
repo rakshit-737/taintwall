@@ -1,0 +1,44 @@
+[project]
+name = "taintwall"
+version = "0.1.0"
+description = "In-process provenance and policy firewall for AI agent tool boundaries"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+keywords = ["prompt-injection", "ai-agents", "security", "mcp", "taint-tracking"]
+dependencies = ["pyyaml>=6.0.2"]
+
+[project.optional-dependencies]
+demo = ["claude-agent-sdk>=0.1.0"]
+
+[project.scripts]
+taintwall = "taintwall.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.3", "mypy>=1.13", "ruff>=0.8", "types-pyyaml>=6.0"]
+
+[build-system]
+requires = ["uv_build>=0.5,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+xfail_strict = true
+filterwarnings = ["error"]
+markers = ["live: requires a real model via the Claude Agent SDK; never runs in CI"]
+addopts = "-m 'not live'"
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+preview = true
+select = ["E", "F", "I", "UP", "B", "PTH", "unspecified-encoding", "RUF"]
+
+[tool.mypy]
+strict = true
+files = ["src", "tests"]
