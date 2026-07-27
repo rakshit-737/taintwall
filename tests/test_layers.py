@@ -28,10 +28,24 @@ def test_all_five_ablation_columns_exist() -> None:
     assert ABLATION_LABELS == ("none", "+L1", "+L1L2", "+L1L2L3", "+all")
 
 
-@pytest.mark.parametrize("label", ABLATION_LABELS)
-def test_every_stub_stack_allows_everything(label: str) -> None:
+@pytest.mark.parametrize("label", ["none", "+L1", "+L1L2"])
+def test_stacks_without_a_policy_layer_allow_a_sink_call(label: str) -> None:
     stack = build_stack(label)
     decision = stack.decide(ToolCall("send_email", {"to": "x@example.invalid"}), Transcript("t"))
+    assert decision.verdict is Verdict.ALLOW
+
+
+@pytest.mark.parametrize("label", ["+L1L2L3", "+all"])
+def test_policy_stacks_deny_a_sink_call_in_a_read_only_session(label: str) -> None:
+    stack = build_stack(label)  # default intent is read-only
+    decision = stack.decide(ToolCall("send_email", {"to": "x@example.invalid"}), Transcript("t"))
+    assert decision.verdict is Verdict.DENY
+
+
+@pytest.mark.parametrize("label", ABLATION_LABELS)
+def test_every_stack_allows_a_read_call(label: str) -> None:
+    stack = build_stack(label)
+    decision = stack.decide(ToolCall("read_email", {"id": "1"}), Transcript("t"))
     assert decision.verdict is Verdict.ALLOW
 
 

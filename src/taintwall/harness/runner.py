@@ -18,6 +18,7 @@ from taintwall.agent.loop import RunResult, run_agent
 from taintwall.agent.sinks import ExfilRecorder
 from taintwall.agent.tools import build_default_registry
 from taintwall.corpus.schema import AttackRecord
+from taintwall.layers.policy import SessionIntent
 from taintwall.layers.stubs import build_stack
 from taintwall.tasks.suite import BenignTask
 
@@ -49,6 +50,7 @@ def _execute(
     recorder = ExfilRecorder()
     registry = build_default_registry(world, recorder)
     llm = FakeLLM(task.script)
+    stack = build_stack(stack_label, SessionIntent(task.allowed_capabilities))
 
     started = time.perf_counter()
     result = run_agent(
@@ -56,7 +58,7 @@ def _execute(
         llm=llm,
         registry=registry,
         recorder=recorder,
-        stack=build_stack(stack_label),
+        stack=stack,
     )
     return result, (time.perf_counter() - started) * 1000.0
 

@@ -9,14 +9,21 @@ model, that text enters the same token stream as the system prompt and is execut
 instruction. taintwall sits at the tool boundary and enforces the trust boundary the
 agent cannot enforce itself.
 
-**Status: Phase 2, Layer 1 shipped.** Phase 1 built the *attack* side and the
-*measurement* side — a deliberately vulnerable demo agent, a benign task suite, a
-labelled attack corpus, and a reporter whose ablation table has all five columns wired.
-**Layer 1 is now real**: it normalizes tool output and detects both concealment families
-— invisible codepoints (F3a) and hidden markup (F3b) — catching **100% of each** at a
-**0% false-positive rate** on the benign corpus, and flagging nothing in the eight
-plain-text families (that is a detector's job, Layer 2). Run `taintwall detect`. Layers
-2–4 remain stubs. The README tracks exactly what defends and what does not.
+**Status: Phase 2 — Layers 1 and 3 shipped.** Phase 1 built the *attack* side and the
+*measurement* side. Two defense layers are now real:
+
+- **Layer 1 (normalization + detection)** catches both concealment families —
+  invisible codepoints (F3a) and hidden markup (F3b) — at **100% each** with a **0%
+  false-positive rate** on the benign corpus, and flags nothing in the eight plain-text
+  families. Run `taintwall detect`.
+- **Layer 3 (intent-gated policy)** gates tool calls against the session's declared
+  intent. In the ablation table it is the *only* layer that reduces exfiltration: content
+  inspection (`+L1`, `+L1L2`) leaves it unchanged, while `+L1L2L3` drops it from 43% to
+  **1%**. That residual 1% is not noise — it is the one action task whose intent
+  legitimately grants a sink, the documented limit of capability-gating (KB-005).
+
+That result *is* the project's thesis, measured: the action layer is load-bearing;
+content inspection is decorative. Run `taintwall bench`. Layers 2 and 4 remain stubs.
 
 ---
 

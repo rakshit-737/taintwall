@@ -8,12 +8,14 @@ downstream of `build_stack` needs to change.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from taintwall.agent.fake_llm import Transcript
 from taintwall.agent.tools import ToolCall, ToolResult
 from taintwall.layers.base import Decision, Layer, LayerStack, Verdict
 from taintwall.layers.normalization import NormalizationLayer
+from taintwall.layers.policy import PolicyLayer, SessionIntent
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,11 +39,6 @@ def detect_stub() -> Layer:
     return _Stub("L2-detect")
 
 
-def policy_stub() -> Layer:
-    """Layer 3 placeholder. Phase 3 gates tool calls on declared session intent."""
-    return _Stub("L3-policy")
-
-
 def canary_stub() -> Layer:
     """Layer 4 placeholder. Phase 2 plants and watches for canary tokens."""
     return _Stub("L4-canary")
@@ -50,12 +47,22 @@ def canary_stub() -> Layer:
 ABLATION_LABELS: tuple[str, ...] = ("none", "+L1", "+L1L2", "+L1L2L3", "+all")
 
 
-def build_stack(label: str) -> LayerStack:
-    factories = {
+def build_stack(label: str, intent: SessionIntent | None = None) -> LayerStack:
+    """Compose a layer stack. `intent` configures Layer 3; defaults to read-only.
+
+    The `none`, `+L1`, and `+L1L2` stacks ignore intent (they contain no policy
+    layer). `+L1L2L3` and `+all` gate tool calls against it.
+    """
+    session_intent = intent if intent is not None else SessionIntent.read_only()
+
+    def policy_layer() -> Layer:
+        return PolicyLayer(session_intent)
+
+    factories: dict[str, tuple[Callable[[], Layer], ...]] = {
         "none": (),
         "+L1": (tag_layer,),
         "+L1L2": (tag_layer, detect_stub),
-        "+L1L2L3": (tag_layer, detect_stub, policy_stub),
-        "+all": (tag_layer, detect_stub, policy_stub, canary_stub),
-    }[label]
-    return LayerStack(label=label, layers=tuple(factory() for factory in factories))
+        "+L1L2L3": (tag_layer, detect_stub, policy_layer),
+        "+all": (tag_layer, detect_stub, policy_layer, canary_stub),
+    }
+    return LayerStack(label=label, layers=tuple(factory() for factory in factories[label]))

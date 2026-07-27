@@ -34,6 +34,20 @@ def test_utility_under_attack_uses_only_attacked_runs() -> None:
     assert report.utility_under_attack == Proportion(1, 2)
 
 
+def test_exfiltration_is_reported_even_under_the_scripted_planner() -> None:
+    # Unlike ASR, the exfiltration count is an observed sink-call rate and is
+    # reported on the scripted track (its cross-stack delta is the Layer 3 signal).
+    (report,) = build_reports(OUTCOMES, model_kind=ModelKind.FAKE)
+    assert report.exfiltration == Proportion(1, 2)
+
+
+def test_exfiltration_appears_in_the_rendered_table() -> None:
+    text = render_markdown(
+        build_reports(OUTCOMES, model_kind=ModelKind.FAKE), model_kind=ModelKind.FAKE
+    )
+    assert "exfiltration" in text
+
+
 def test_real_model_computes_a_real_asr() -> None:
     (report,) = build_reports(OUTCOMES, model_kind=ModelKind.REAL)
     assert report.asr == Proportion(1, 2)
@@ -53,6 +67,7 @@ def test_rendering_a_fake_run_with_a_populated_asr_is_refused() -> None:
         benign_utility=Proportion(1, 1),
         utility_under_attack=Proportion(1, 2),
         asr=Proportion(1, 2),
+        exfiltration=Proportion(1, 2),
         per_family_asr={},
         latency_p50_ms=1.0,
         latency_p95_ms=3.0,

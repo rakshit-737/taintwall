@@ -24,6 +24,7 @@ class CellReport:
     benign_utility: Proportion
     utility_under_attack: Proportion
     asr: Proportion | None
+    exfiltration: Proportion
     per_family_asr: Mapping[str, Proportion | None]
     latency_p50_ms: float
     latency_p95_ms: float
@@ -71,6 +72,7 @@ def build_reports(
                     sum(o.task_succeeded for o in attacked), len(attacked)
                 ),
                 asr=asr,
+                exfiltration=Proportion(sum(o.attack_succeeded for o in attacked), len(attacked)),
                 per_family_asr=per_family,
                 latency_p50_ms=p50,
                 latency_p95_ms=p95,
@@ -91,14 +93,15 @@ def render_markdown(
     lines = [
         f"# taintwall ablation ({model_kind.value} model)",
         "",
-        "| stack | benign utility | utility under attack | ASR | p50 ms | p95 ms |",
-        "|---|---|---|---|---|---|",
+        "| stack | benign utility | utility under attack | ASR | exfiltration | p50 ms | p95 ms |",
+        "|---|---|---|---|---|---|---|",
     ]
     for report in reports:
         asr_cell = ASR_UNAVAILABLE if report.asr is None else report.asr.format()
         lines.append(
             f"| `{report.stack_label}` | {report.benign_utility.format()} "
             f"| {report.utility_under_attack.format()} | {asr_cell} "
+            f"| {report.exfiltration.format()} "
             f"| {report.latency_p50_ms:.2f} | {report.latency_p95_ms:.2f} |"
         )
 
@@ -123,5 +126,11 @@ def render_markdown(
         "> Every cell reports its sample size and a 95% Wilson interval. A near-zero",
         "> attack-success rate is a statement about the benchmark, not about the",
         "> problem being solved - see arXiv 2510.05244.",
+        ">",
+        "> ASR (did a model obey) is N/A on the scripted track. Exfiltration counts",
+        "> sink calls that actually executed; on the scripted track whether an attack",
+        "> fires is authored, so read the *delta* across stacks - the drop from `none`",
+        "> to `+L1L2L3` is Layer 3 blocking sink calls a read-only session should never",
+        "> make - not the absolute value.",
     ]
     return "\n".join(lines) + "\n"

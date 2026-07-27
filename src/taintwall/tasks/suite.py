@@ -6,7 +6,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 
 from taintwall.agent.loop import RunResult
-from taintwall.agent.tools import ToolCall
+from taintwall.agent.tools import READ_TOOLS, ToolCall
 from taintwall.agent.world import World
 
 
@@ -42,6 +42,9 @@ class BenignTask:
     script: tuple[ToolCall, ...]
     succeeded: Callable[[RunResult], bool]
     injection_points: tuple[InjectionPoint, ...]
+    # The capabilities this task's declared intent is permitted to reach. Almost
+    # every task is read-only; an action task widens this to the sink it needs.
+    allowed_capabilities: frozenset[str] = READ_TOOLS
 
 
 def read_tools_used(result: RunResult) -> tuple[str, ...]:
