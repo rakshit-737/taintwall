@@ -1,0 +1,46 @@
+name: False positive
+description: Report benign content that taintwall (or a detector it wraps) wrongly flags.
+title: "[false-positive] <short description>"
+labels: ["false-positive"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A detection library lives or dies on its false-positive rate. Benign
+        content that gets flagged is exactly as important as an attack that gets
+        missed. Thank you for reporting one.
+  - type: textarea
+    id: text
+    attributes:
+      label: The benign text that was flagged
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: detector
+    attributes:
+      label: Which layer or detector flagged it
+      placeholder: "e.g. Layer 2 (deberta-v3), or a heuristic name"
+    validations:
+      required: true
+  - type: input
+    id: expected
+    attributes:
+      label: Expected verdict
+      placeholder: allow
+    validations:
+      required: true
+  - type: input
+    id: observed
+    attributes:
+      label: Observed verdict
+      placeholder: deny
+    validations:
+      required: true
+  - type: dropdown
+    id: source_license
+    attributes:
+      label: "Licence, if you would like this text added to the benign corpus"
+      options: ["do not add", "CC-BY-4.0", "MIT", "Apache-2.0", "CC0-1.0", "other"]
+    validations:
+      required: true
