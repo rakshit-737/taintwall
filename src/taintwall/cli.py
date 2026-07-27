@@ -11,10 +11,16 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from taintwall.corpus.loader import load_attacks, load_benign
+from taintwall.harness.detect_eval import evaluate_layer1, render_detection_markdown
 from taintwall.harness.report import build_reports, render_markdown
 from taintwall.harness.runner import ModelKind, run_matrix
 from taintwall.layers.stubs import ABLATION_LABELS
 from taintwall.tasks.definitions import TASKS
+
+
+def _cmd_detect() -> int:
+    sys.stdout.write(render_detection_markdown(evaluate_layer1()) + "\n")
+    return 0
 
 
 def _cmd_corpus_validate() -> int:
@@ -82,6 +88,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     bench.add_argument("--out", type=Path, default=None)
     bench.add_argument("--update-baseline", action="store_true")
 
+    sub.add_parser("detect", help="Layer 1 detection efficacy over the corpus")
+
     corpus = sub.add_parser("corpus", help="corpus utilities")
     corpus_sub = corpus.add_subparsers(dest="corpus_command", required=True)
     corpus_sub.add_parser("validate")
@@ -91,6 +99,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "bench":
         return _cmd_bench(args.update_baseline, args.model, args.limit_attacks, args.out)
+    if args.command == "detect":
+        return _cmd_detect()
     if args.corpus_command == "validate":
         return _cmd_corpus_validate()
     return _cmd_corpus_export(args.out)

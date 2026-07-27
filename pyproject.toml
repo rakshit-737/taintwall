@@ -39,6 +39,11 @@ src = ["src", "tests"]
 preview = true
 select = ["E", "F", "I", "UP", "B", "PTH", "unspecified-encoding", "RUF"]
 
+[tool.ruff.lint.per-file-ignores]
+# These tests deliberately use confusable and fullwidth characters — homoglyph
+# handling is the behaviour under test, so the ambiguous-unicode rules do not apply.
+"tests/test_normalize.py" = ["ambiguous-unicode-character-string", "ambiguous-unicode-character-docstring", "ambiguous-unicode-character-comment"]
+
 [tool.mypy]
 strict = true
 files = ["src", "tests"]

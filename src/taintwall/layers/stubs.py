@@ -1,8 +1,9 @@
-"""Constant-returning placeholders for layers 1-4.
+"""Stack composition, plus constant-returning placeholders for layers 2-4.
 
-Each stub is a real Layer that passes output through unchanged and allows every
-call. Replacing a stub with a working layer is the entire content of a later
-phase; nothing downstream of these functions needs to change.
+Layer 1 is real as of Phase 2 (`NormalizationLayer`); layers 2-4 are still
+stubs that pass output through unchanged and allow every call. Replacing a stub
+with a working layer is the entire content of a later increment; nothing
+downstream of `build_stack` needs to change.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ from dataclasses import dataclass
 from taintwall.agent.fake_llm import Transcript
 from taintwall.agent.tools import ToolCall, ToolResult
 from taintwall.layers.base import Decision, Layer, LayerStack, Verdict
+from taintwall.layers.normalization import NormalizationLayer
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,9 +27,9 @@ class _Stub:
         return Decision(Verdict.ALLOW, f"{self.name}: stub")
 
 
-def tag_stub() -> Layer:
-    """Layer 1 placeholder. Phase 2 replaces this with Tainted[T] tagging."""
-    return _Stub("L1-tag")
+def tag_layer() -> Layer:
+    """Layer 1: normalization + codepoint-smuggling detection (Phase 2)."""
+    return NormalizationLayer()
 
 
 def detect_stub() -> Layer:
@@ -51,9 +53,9 @@ ABLATION_LABELS: tuple[str, ...] = ("none", "+L1", "+L1L2", "+L1L2L3", "+all")
 def build_stack(label: str) -> LayerStack:
     factories = {
         "none": (),
-        "+L1": (tag_stub,),
-        "+L1L2": (tag_stub, detect_stub),
-        "+L1L2L3": (tag_stub, detect_stub, policy_stub),
-        "+all": (tag_stub, detect_stub, policy_stub, canary_stub),
+        "+L1": (tag_layer,),
+        "+L1L2": (tag_layer, detect_stub),
+        "+L1L2L3": (tag_layer, detect_stub, policy_stub),
+        "+all": (tag_layer, detect_stub, policy_stub, canary_stub),
     }[label]
     return LayerStack(label=label, layers=tuple(factory() for factory in factories))

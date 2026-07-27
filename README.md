@@ -9,11 +9,13 @@ model, that text enters the same token stream as the system prompt and is execut
 instruction. taintwall sits at the tool boundary and enforces the trust boundary the
 agent cannot enforce itself.
 
-**Status: Phase 1.** What exists today is the *attack* side and the *measurement* side —
-a deliberately vulnerable demo agent, a benign task suite, a labelled attack corpus, and
-a reporter whose ablation table has all five columns wired. Defense layers 1–4 are stubs
-that return constants. Nothing here defends anything yet, and the README will say so
-until it does.
+**Status: Phase 2, Layer 1 shipped.** Phase 1 built the *attack* side and the
+*measurement* side — a deliberately vulnerable demo agent, a benign task suite, a
+labelled attack corpus, and a reporter whose ablation table has all five columns wired.
+**Layer 1 is now real**: it normalizes tool output and detects codepoint-level smuggling,
+catching 100% of the invisible-codepoint attack family at a 0% false-positive rate on the
+benign corpus (`taintwall detect`). Layers 2–4 remain stubs. The README tracks exactly
+what defends and what does not.
 
 ---
 
@@ -88,6 +90,7 @@ The multi-channel vulnerable agent and the defense-ablation baseline are not.
 ```bash
 uv sync --dev
 uv run taintwall corpus validate     # census of the labelled corpus
+uv run taintwall detect              # Layer 1 detection efficacy over the corpus
 uv run taintwall bench               # ablation table, deterministic track
 uv run pytest -q                     # full gate
 ```
