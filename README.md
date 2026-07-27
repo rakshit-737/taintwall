@@ -9,21 +9,31 @@ model, that text enters the same token stream as the system prompt and is execut
 instruction. taintwall sits at the tool boundary and enforces the trust boundary the
 agent cannot enforce itself.
 
-**Status: Phase 2 — Layers 1 and 3 shipped.** Phase 1 built the *attack* side and the
-*measurement* side. Two defense layers are now real:
+**Status: Phase 2 — Layers 1, 3, and 4 shipped.** Phase 1 built the *attack* side and
+the *measurement* side. Three defense layers are now real, and the ablation table carries
+the project's thesis as a measured progression:
+
+| stack | benign utility | exfiltration |
+|---|---|---|
+| `none` | 100% | 43% |
+| `+L1` (normalize) · `+L1L2` | 100% | 44% (no help — content inspection is decorative) |
+| `+L1L2L3` (+ intent policy) | 100% | **1%** |
+| `+all` (+ provenance) | 100% | **0%** |
 
 - **Layer 1 (normalization + detection)** catches both concealment families —
-  invisible codepoints (F3a) and hidden markup (F3b) — at **100% each** with a **0%
-  false-positive rate** on the benign corpus, and flags nothing in the eight plain-text
-  families. Run `taintwall detect`.
-- **Layer 3 (intent-gated policy)** gates tool calls against the session's declared
-  intent. In the ablation table it is the *only* layer that reduces exfiltration: content
-  inspection (`+L1`, `+L1L2`) leaves it unchanged, while `+L1L2L3` drops it from 43% to
-  **1%**. That residual 1% is not noise — it is the one action task whose intent
-  legitimately grants a sink, the documented limit of capability-gating (KB-005).
+  invisible codepoints (F3a) and hidden markup (F3b) — at **100% each**, **0%
+  false-positive** on the benign corpus. `taintwall detect`.
+- **Layer 3 (intent-gated policy)** gates tool calls on declared intent. It is the first
+  layer that reduces exfiltration (43%→1%), because it reasons about *actions*, not text.
+- **Layer 4 (argument-level provenance)** denies a sink call carrying private data even
+  when the session legitimately holds that capability — closing the 1% residual that
+  capability-gating alone leaves (the KB-005 coincidence case), while the legitimate reply
+  still goes through. Verbatim/base64/hex are caught; paraphrase is not, and that limit is
+  KB-001.
 
-That result *is* the project's thesis, measured: the action layer is load-bearing;
-content inspection is decorative. Run `taintwall bench`. Layers 2 and 4 remain stubs.
+The progression *is* the argument: content inspection is decorative, the action layer is
+load-bearing, and argument provenance closes the gap capability-gating leaves. Run
+`taintwall bench`. Layer 2 (a pluggable detector signal) remains a stub.
 
 ---
 

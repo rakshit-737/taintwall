@@ -16,6 +16,7 @@ from taintwall.agent.tools import ToolCall, ToolResult
 from taintwall.layers.base import Decision, Layer, LayerStack, Verdict
 from taintwall.layers.normalization import NormalizationLayer
 from taintwall.layers.policy import PolicyLayer, SessionIntent
+from taintwall.layers.provenance_layer import ProvenanceLayer
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,30 +40,32 @@ def detect_stub() -> Layer:
     return _Stub("L2-detect")
 
 
-def canary_stub() -> Layer:
-    """Layer 4 placeholder. Phase 2 plants and watches for canary tokens."""
-    return _Stub("L4-canary")
-
-
 ABLATION_LABELS: tuple[str, ...] = ("none", "+L1", "+L1L2", "+L1L2L3", "+all")
 
 
-def build_stack(label: str, intent: SessionIntent | None = None) -> LayerStack:
-    """Compose a layer stack. `intent` configures Layer 3; defaults to read-only.
+def build_stack(
+    label: str,
+    intent: SessionIntent | None = None,
+    private_values: frozenset[str] = frozenset(),
+) -> LayerStack:
+    """Compose a layer stack.
 
-    The `none`, `+L1`, and `+L1L2` stacks ignore intent (they contain no policy
-    layer). `+L1L2L3` and `+all` gate tool calls against it.
+    `intent` configures Layer 3 (defaults to read-only); `private_values`
+    configures Layer 4. The `none`, `+L1`, and `+L1L2` stacks use neither.
     """
     session_intent = intent if intent is not None else SessionIntent.read_only()
 
     def policy_layer() -> Layer:
         return PolicyLayer(session_intent)
 
+    def provenance_layer() -> Layer:
+        return ProvenanceLayer(private_values)
+
     factories: dict[str, tuple[Callable[[], Layer], ...]] = {
         "none": (),
         "+L1": (tag_layer,),
         "+L1L2": (tag_layer, detect_stub),
         "+L1L2L3": (tag_layer, detect_stub, policy_layer),
-        "+all": (tag_layer, detect_stub, policy_layer, canary_stub),
+        "+all": (tag_layer, detect_stub, policy_layer, provenance_layer),
     }
     return LayerStack(label=label, layers=tuple(factory() for factory in factories[label]))

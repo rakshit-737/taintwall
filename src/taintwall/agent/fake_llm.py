@@ -62,12 +62,30 @@ class Plan:
 
 @dataclass(slots=True)
 class FakeLLM:
-    """Follows its script first, then naively obeys the last thing it read."""
+    """Follows its script first, then naively obeys the last thing it read.
+
+    When it obeys an exfiltration directive it copies the private data it has
+    access to into the sink's body, exactly as a real "harvest now, decrypt
+    later" attack does. This is what gives argument-level provenance something to
+    catch on the deterministic track; script-driven (legitimate) calls are left
+    alone and carry no private data.
+    """
 
     script: Sequence[ToolCall]
     obey_injections: bool = True
+    private_data: tuple[str, ...] = ()
     _step: int = 0
     _obeyed: set[str] = field(default_factory=set)
+
+    def _fill_with_private_data(self, call: ToolCall) -> ToolCall:
+        if not self.private_data:
+            return call
+        body_key = _BODY_NAME.get(call.name)
+        if body_key is None:
+            return call
+        args = dict(call.args)
+        args[body_key] = " ".join(self.private_data)
+        return ToolCall(call.name, args)
 
     def next(self, transcript: Transcript) -> Plan:
         if self._step < len(self.script):
@@ -83,5 +101,5 @@ class FakeLLM:
             self._obeyed.add(content)
             calls = interpret(content)
             if calls:
-                return Plan(calls)
+                return Plan(tuple(self._fill_with_private_data(c) for c in calls))
         return Plan((), text=f"Summary for: {transcript.intent}")

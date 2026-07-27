@@ -49,8 +49,15 @@ def _execute(
 
     recorder = ExfilRecorder()
     registry = build_default_registry(world, recorder)
-    llm = FakeLLM(task.script)
-    stack = build_stack(stack_label, SessionIntent(task.allowed_capabilities))
+    private_values = frozenset(world.secrets.values())
+    # The naive planner copies the private data it can see into an exfil call, as
+    # a real harvest attack does - giving Layer 4 something to catch.
+    llm = FakeLLM(task.script, private_data=tuple(sorted(private_values)))
+    stack = build_stack(
+        stack_label,
+        SessionIntent(task.allowed_capabilities),
+        private_values=private_values,
+    )
 
     started = time.perf_counter()
     result = run_agent(
