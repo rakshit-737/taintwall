@@ -9,9 +9,9 @@ model, that text enters the same token stream as the system prompt and is execut
 instruction. taintwall sits at the tool boundary and enforces the trust boundary the
 agent cannot enforce itself.
 
-**Status: Phase 2 — Layers 1, 3, and 4 shipped.** Phase 1 built the *attack* side and
-the *measurement* side. Three defense layers are now real, and the ablation table carries
-the project's thesis as a measured progression:
+**Status: Phase 2 — all four defense layers shipped.** Phase 1 built the *attack* side
+and the *measurement* side. Every layer is now real, and the ablation table carries the
+project's thesis as a measured progression:
 
 | stack | benign utility | exfiltration |
 |---|---|---|
@@ -31,9 +31,15 @@ the project's thesis as a measured progression:
   still goes through. Verbatim/base64/hex are caught; paraphrase is not, and that limit is
   KB-001.
 
+- **Layer 2 (heuristic content classifier)** is a *signal, never a gate*, and its numbers
+  are the reason why: swept across thresholds on the corpus, it never gets its
+  false-positive rate below ~9% (legitimate text uses the words it keys on) and its
+  true-positive rate collapses when you try. `docs/why-classifiers-fail.md` shows this on
+  our own corpus, reproducing arXiv 2410.22770. Contrast Layer 1's 0% false positives.
+
 The progression *is* the argument: content inspection is decorative, the action layer is
 load-bearing, and argument provenance closes the gap capability-gating leaves. Run
-`taintwall bench`. Layer 2 (a pluggable detector signal) remains a stub.
+`taintwall bench` and `taintwall detect`.
 
 ---
 

@@ -7,7 +7,7 @@ import pytest
 from taintwall.agent.fake_llm import Transcript
 from taintwall.agent.tools import ToolCall, ToolResult
 from taintwall.layers.base import Decision, LayerStack, Verdict
-from taintwall.layers.stubs import ABLATION_LABELS, build_stack
+from taintwall.layers.composition import ABLATION_LABELS, build_stack
 
 
 @dataclass(frozen=True, slots=True)

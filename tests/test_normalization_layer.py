@@ -6,8 +6,8 @@ from taintwall.corpus.loader import load_attacks
 from taintwall.corpus.schema import Family
 from taintwall.harness.detect_eval import evaluate_layer1
 from taintwall.layers.base import Verdict
+from taintwall.layers.composition import build_stack
 from taintwall.layers.normalization import NormalizationLayer
-from taintwall.layers.stubs import build_stack
 
 
 def _tagged(text: str) -> str:

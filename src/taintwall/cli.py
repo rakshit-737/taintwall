@@ -11,15 +11,15 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from taintwall.corpus.loader import load_attacks, load_benign
-from taintwall.harness.detect_eval import evaluate_layer1, render_detection_markdown
+from taintwall.harness.detect_eval import render_all_detection_markdown
 from taintwall.harness.report import build_reports, render_markdown
 from taintwall.harness.runner import ModelKind, run_matrix
-from taintwall.layers.stubs import ABLATION_LABELS
+from taintwall.layers.composition import ABLATION_LABELS
 from taintwall.tasks.definitions import TASKS
 
 
 def _cmd_detect() -> int:
-    sys.stdout.write(render_detection_markdown(evaluate_layer1()) + "\n")
+    sys.stdout.write(render_all_detection_markdown())
     return 0
 
 

@@ -8,7 +8,7 @@ from taintwall.agent.sinks import ExfilRecorder
 from taintwall.agent.tools import ToolCall, ToolResult, build_default_registry
 from taintwall.agent.world import World
 from taintwall.layers.base import Decision, LayerStack, Verdict
-from taintwall.layers.stubs import build_stack
+from taintwall.layers.composition import build_stack
 
 
 def _run(page_body: str, stack: LayerStack) -> tuple[ExfilRecorder, RunResult]:

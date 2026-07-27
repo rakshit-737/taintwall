@@ -18,8 +18,8 @@ from taintwall.agent.loop import RunResult, run_agent
 from taintwall.agent.sinks import ExfilRecorder
 from taintwall.agent.tools import build_default_registry
 from taintwall.corpus.schema import AttackRecord
+from taintwall.layers.composition import build_stack
 from taintwall.layers.policy import SessionIntent
-from taintwall.layers.stubs import build_stack
 from taintwall.tasks.suite import BenignTask
 
 

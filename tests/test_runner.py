@@ -4,7 +4,7 @@ import pytest
 
 from taintwall.corpus.loader import load_attacks
 from taintwall.harness.runner import ModelKind, run_matrix
-from taintwall.layers.stubs import ABLATION_LABELS
+from taintwall.layers.composition import ABLATION_LABELS
 from taintwall.tasks.definitions import TASKS
 
 

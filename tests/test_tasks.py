@@ -6,7 +6,7 @@ from taintwall.agent.fake_llm import FakeLLM
 from taintwall.agent.loop import run_agent
 from taintwall.agent.sinks import ExfilRecorder
 from taintwall.agent.tools import build_default_registry
-from taintwall.layers.stubs import build_stack
+from taintwall.layers.composition import build_stack
 from taintwall.tasks.definitions import TASKS, by_id
 from taintwall.tasks.suite import BenignTask
 
